@@ -1,0 +1,72 @@
+FROM nvidia/cuda:latest
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    wget \
+    git \
+    libpng-dev \
+    libjpeg-dev \
+    libtiff-dev \
+    libglu1-mesa-dev \
+    libxmu-dev \
+    libxi-dev \
+    libboost-iostreams-dev \
+    libboost-program-options-dev \
+    libboost-system-dev \
+    libboost-serialization-dev \
+    libopencv-dev \
+    libcgal-dev \
+    libcgal-qt5-dev \
+    libatlas-base-dev \
+    libsuitesparse-dev \
+    freeglut3-dev \
+    libglew-dev \
+    libglfw3-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# install eigen3.2
+RUN cd /opt && \
+    wget https://mirrors.edge.kernel.org/ubuntu/pool/universe/e/eigen3/libeigen3-dev_3.2.0-8_all.deb && \
+    dpkg -i libeigen3-dev_3.2.0-8_all.deb && \
+    cd / && \
+    rm -rf /opt/libeigen3-dev_3.2.0-8_all.deb
+
+# install vcglib
+RUN cd /opt && \
+    git clone https://github.com/cdcseacave/VCG && \
+    cd /
+
+# install ceres
+RUN cd /opt && \
+    git clone https://github.com/ceres-solver/ceres-solver && \
+    mkdir ceres-solver/build && cd ceres-solver/build && \
+    cmake \
+    -D CMAKE_BUILD_TYPE=Release \
+    -D CMAKE_INSTALL_PREFIX=/usr/local \
+    -D MINIGLOG=ON \
+    -D BUILD_TESTING=OFF \
+    -D BUILD_EXAMPLES=OFF \
+    -D BUILD_BENCHMARKS=OFF \
+    .. && \
+    make && make install && \
+    cd / && \
+    rm -rf /opt/ceres-solver
+
+# install OpenMVS
+RUN cd /opt && \
+    git clone https://github.com/cdcseacave/openMVS && \
+    mkdir openMVS/realBuild && cd openMVS/realBuild && \
+    cmake \
+    -D CMAKE_BUILD_TYPE=Release \
+    -D CMAKE_INSTALL_PREFIX=/usr/local \
+    -D VCG_ROOT=/opt/VCG \
+    -D OpenMVS_USE_CERES=ON \
+    -D CMAKE_LIBRARY_PATH=/usr/local/cuda/lib64/stubs/ \
+    .. && \
+    make && make install && \
+    cd / && \
+    rm -rf /opt/openMVS
+
+RUN rm -rf /opt/vcg
+WORKDIR /usr/local/bin/OpenMVS
